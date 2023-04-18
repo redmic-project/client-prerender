@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  prerender:
+    image: ${IMAGE_NAME:-tvanro/prerender-alpine}:${IMAGE_TAG:-latest}
+    environment:
+      PORT:
+      DISABLE_LOGGING:
+      MEMORY_CACHE:
+      CACHE_MAXSIZE:
+      CACHE_TTL:
+      PAGE_DONE_CHECK_INTERVAL:
+      PAGE_LOAD_TIMEOUT:
+      WAIT_AFTER_LAST_REQUEST:
+      FOLLOW_REDIRECTS:
+      LOG_REQUESTS:
+      CAPTURE_CONSOLE_LOG:
+      ENABLE_SERVICE_WORKER:
+    networks:
+      prerender-net:
+    healthcheck:
+      test: wget --spider -q http://localhost:${PORT}/${TEST_URL}
+      interval: ${HEALTHCHECK_INTERVAL:-30s}
+      timeout: ${HEALTHCHECK_TIMEOUT:-15s}
+      retries: ${HEALTHCHECK_RETRIES:-5}
+      start_period: ${HEALTHCHECK_START_PERIOD:-1m}
+    deploy:
+      mode: replicated
+      replicas: ${REPLICAS:-1}
+      restart_policy:
+        delay: ${RESTART_DELAY:-5s}
+      update_config:
+        delay: ${UPDATE_DELAY:-1m}
+      resources:
+        limits:
+          cpus: '${RESOURCES_LIMITS_CPUS:-1}'
+          memory: ${RESOURCES_LIMITS_MEMORY:-512M}
+        reservations:
+          cpus: '${RESOURCES_RESERVATIONS_CPUS:-0.001}'
+          memory: ${RESOURCES_RESERVATIONS_MEMORY:-256M}
+
+networks:
+  prerender-net:
+    name: ${PRERENDER_NET_NAME:-prerender-net}
+    driver: ${PRERENDER_NET_DRIVER:-overlay}
+    attachable: ${PRERENDER_NET_ATTACHABLE:-true}
